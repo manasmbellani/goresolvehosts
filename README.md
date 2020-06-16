@@ -3,7 +3,7 @@
 This Golang script is used to convert a hostname to an IP address (or several IP addresses).
 
 ## Examples
-To get an IP address for hostnames in file `hostnames.txt`: 
+To get an IP address for hostnames in file `/tmp/hosts.txt`: 
 ```
 $ cat /tmp/hosts.txt
 www.google.com
@@ -15,7 +15,7 @@ www.google.com|142.250.66.164
 ```
 
 
-To get ALL IP address for hostnames in file `hostnames.txt`: 
+To get ALL IP address for hostnames in file `/tmp/hosts.txt`: 
 ```
 $ cat /tmp/hosts.txt
 www.google.com
