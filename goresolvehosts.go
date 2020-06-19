@@ -18,8 +18,12 @@ const Delim = "|"
 func main() {
 	allIPPtr := flag.Bool("allIPs", false,
 		"Set this flag to show ALL IPs, not just one")
+	returnHostsOnlyPtr := flag.Bool("hostsOnly", false,
+		"Set this flag to return host name only - not IP address")
+
 	flag.Parse()
 	allIPs := *allIPPtr
+	returnHostsOnly := *returnHostsOnlyPtr
 
 	var wg sync.WaitGroup
 
@@ -37,15 +41,23 @@ func main() {
 					ipsToShow := ""
 					// Convert all IPs to string
 					var ipsAsStr []string
-					if allIPs {
-						for _, ip := range ips {
-							ipsAsStr = append(ipsAsStr, ip.String())
-						}
-						ipsToShow = strings.Join(ipsAsStr, ",")
+
+					// Print the hostname only
+					if returnHostsOnly {
+						fmt.Printf("%s\n", host)
 					} else {
-						ipsToShow = ips[0].String()
+						if allIPs {
+							// Show All Resolved IP
+							for _, ip := range ips {
+								ipsAsStr = append(ipsAsStr, ip.String())
+							}
+							ipsToShow = strings.Join(ipsAsStr, ",")
+						} else {
+							// Show the first IP from list of resolved IPs
+							ipsToShow = ips[0].String()
+						}
+						fmt.Printf("%s%s%s\n", host, Delim, ipsToShow)
 					}
-					fmt.Printf("%s%s%s\n", host, Delim, ipsToShow)
 				}
 			}(host)
 		}
