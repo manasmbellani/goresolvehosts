@@ -20,21 +20,25 @@ func main() {
 		"Set this flag to show ALL IPs, not just one")
 	returnHostsOnlyPtr := flag.Bool("hostsOnly", false,
 		"Set this flag to return host name only - not IP address")
-
+	numThreadsPtr := flag.Int("numThreads", 20,
+		"Get the number of threads to use")
 	flag.Parse()
 	allIPs := *allIPPtr
 	returnHostsOnly := *returnHostsOnlyPtr
+	numThreads := *numThreadsPtr
+
+	// List of hosts to resolve
+	hosts := make(chan string)
 
 	var wg sync.WaitGroup
 
-	sc := bufio.NewScanner(os.Stdin)
-	for sc.Scan() {
-		host := sc.Text()
+	for i := 0; i < numThreads; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-		if host != "" {
-			wg.Add(1)
-			go func(host string) {
-				defer wg.Done()
+			// Wait to receive the next host
+			for host := range hosts {
 				ips, _ := net.LookupIP(host)
 
 				if ips != nil {
@@ -59,8 +63,22 @@ func main() {
 						fmt.Printf("%s%s%s\n", host, Delim, ipsToShow)
 					}
 				}
-			}(host)
+			}
+		}()
+	}
+
+	sc := bufio.NewScanner(os.Stdin)
+	for sc.Scan() {
+		host := sc.Text()
+
+		if host != "" {
+			// Add the hosts to resolve from the user input if not null
+			hosts <- host
 		}
 	}
+
+	// no more hosts to send
+	close(hosts)
+
 	wg.Wait()
 }
