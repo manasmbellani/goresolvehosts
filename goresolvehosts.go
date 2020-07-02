@@ -4,28 +4,35 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"flag"
 	"fmt"
 	"net"
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Delim - Delimiter to use when writing Hostname to IP address
 const Delim = "|"
 
+// DNSTimeout - Timeout to use for Reverse PTR
+const DNSTimeout = 1000 * time.Millisecond
+
 func main() {
 	allIPPtr := flag.Bool("allIPs", false,
 		"Set this flag to show ALL IPs, not just one")
-	returnHostsOnlyPtr := flag.Bool("hostsOnly", false,
-		"Set this flag to return host name only - not IP address")
+	returnRespOnlyPtr := flag.Bool("respOnly", false,
+		"Set this flag to return the response only - not the query")
 	numThreadsPtr := flag.Int("numThreads", 20,
 		"Get the number of threads to use")
+	reversePtr := flag.Bool("r", false, "Perform reverse PTR to get hostnames for IP addresses ")
 	flag.Parse()
 	allIPs := *allIPPtr
-	returnHostsOnly := *returnHostsOnlyPtr
+	returnRespOnly := *returnRespOnlyPtr
 	numThreads := *numThreadsPtr
+	reverse := *reversePtr
 
 	// List of hosts to resolve
 	hosts := make(chan string)
@@ -39,28 +46,50 @@ func main() {
 
 			// Wait to receive the next host
 			for host := range hosts {
-				ips, _ := net.LookupIP(host)
 
-				if ips != nil {
-					ipsToShow := ""
-					// Convert all IPs to string
-					var ipsAsStr []string
+				if reverse {
+					// need to perform Reverse PTR lookup on domain name
+					ctx, cancel := context.WithTimeout(context.TODO(),
+						DNSTimeout)
+					defer cancel()
 
-					// Print the hostname only
-					if returnHostsOnly {
-						fmt.Printf("%s\n", host)
-					} else {
-						if allIPs {
-							// Show All Resolved IP
-							for _, ip := range ips {
-								ipsAsStr = append(ipsAsStr, ip.String())
-							}
-							ipsToShow = strings.Join(ipsAsStr, ",")
+					// Get the host names from the IP address
+					var r net.Resolver
+					names, err := r.LookupAddr(ctx, host)
+					if err == nil && len(names) > 0 {
+
+						if returnRespOnly {
+							// only display response
+							fmt.Println(names[0])
 						} else {
-							// Show the first IP from list of resolved IPs
-							ipsToShow = ips[0].String()
+							// Display the query and response
+							fmt.Printf("%s%s%s\n", host, Delim, names[0])
 						}
-						fmt.Printf("%s%s%s\n", host, Delim, ipsToShow)
+					}
+				} else {
+					ips, _ := net.LookupIP(host)
+
+					if ips != nil {
+						ipsToShow := ""
+						// Convert all IPs to string
+						var ipsAsStr []string
+
+						// Print the hostname only
+						if returnRespOnly {
+							fmt.Printf("%s\n", host)
+						} else {
+							if allIPs {
+								// Show All Resolved IP
+								for _, ip := range ips {
+									ipsAsStr = append(ipsAsStr, ip.String())
+								}
+								ipsToShow = strings.Join(ipsAsStr, ",")
+							} else {
+								// Show the first IP from list of resolved IPs
+								ipsToShow = ips[0].String()
+							}
+							fmt.Printf("%s%s%s\n", host, Delim, ipsToShow)
+						}
 					}
 				}
 			}
