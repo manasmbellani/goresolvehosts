@@ -24,7 +24,7 @@ func main() {
 	allIPPtr := flag.Bool("allIPs", false,
 		"Set this flag to show ALL IPs, not just one")
 	returnRespOnlyPtr := flag.Bool("respOnly", false,
-		"Set this flag to return the response only - not the query")
+		"Set this flag to return the response only aka IP for A DNS query, domain for PTR DNS query - not the query itself")
 	numThreadsPtr := flag.Int("numThreads", 20,
 		"Get the number of threads to use")
 	reversePtr := flag.Bool("r", false, "Perform reverse PTR to get hostnames for IP addresses ")

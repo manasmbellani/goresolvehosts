@@ -39,10 +39,10 @@ $ cat /tmp/ip.txt | go run goresolvehosts.go -r
 142.250.66.196|syd09s23-in-f4.1e100.net.
 ```
 
-To get the response only (and not display the query), run the command:
+To get the response only (and not display the query) for the A/PTR record, run the command:
 ```
 $ cat /tmp/ips.txt | go run goresolvehosts.go -r -respOnly
-127.0.0.1|localhost
-1.1.1.1|one.one.one.one.
-142.250.66.196|syd09s23-in-f4.1e100.net.
+localhost
+one.one.one.one.
+syd09s23-in-f4.1e100.net.
 ```
